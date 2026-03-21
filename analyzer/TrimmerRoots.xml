@@ -1,0 +1,5 @@
+<linker>
+  <!-- Keep Roslyn assemblies intact during trimming -->
+  <assembly fullname="Microsoft.CodeAnalysis" preserve="all" />
+  <assembly fullname="Microsoft.CodeAnalysis.CSharp" preserve="all" />
+</linker>

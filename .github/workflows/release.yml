@@ -1,0 +1,93 @@
+name: Release
+
+# Triggers on version tags: v1.0.0, v1.2.3, etc.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            go_binary: prdiagram.exe
+            analyzer_binary: analyzer.exe
+            archive_name: prdiagram-windows-x64.zip
+          - os: ubuntu-latest
+            rid: linux-x64
+            go_binary: prdiagram
+            analyzer_binary: analyzer
+            archive_name: prdiagram-linux-x64.tar.gz
+          - os: macos-latest
+            rid: osx-arm64
+            go_binary: prdiagram
+            analyzer_binary: analyzer
+            archive_name: prdiagram-macos-arm64.tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build .NET analyzer
+        run: >
+          dotnet publish analyzer/analyzer.csproj
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -c Release
+          -p:PublishSingleFile=true
+          -o analyzer/dist
+
+      - name: Build Go binary
+        run: go build -o ${{ matrix.go_binary }} .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item ${{ matrix.go_binary }} dist/
+          Copy-Item analyzer/dist/${{ matrix.analyzer_binary }} dist/
+          Compress-Archive -Path dist/* -DestinationPath ${{ matrix.archive_name }}
+
+      - name: Package (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir dist
+          cp ${{ matrix.go_binary }} dist/
+          cp analyzer/dist/${{ matrix.analyzer_binary }} dist/
+          tar -czf ${{ matrix.archive_name }} -C dist .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

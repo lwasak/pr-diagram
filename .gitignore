@@ -30,3 +30,19 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Generated diagram output
+pr-diagram-*.html
+
+# .NET build artifacts
+analyzer/bin/
+analyzer/obj/
+analyzer/dist/
+
+# Compiled Go binaries
+prdiagram
+prdiagram.exe
+
+# Claude Code context
+prdiagram-context.md
+.claude/
