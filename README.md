@@ -143,8 +143,6 @@ pr-diagram/
 ## Roadmap
 
 - [ ] Azure DevOps integration — `--org`, `--project`, `--repo`, `--pr`, `--token` flags to fetch changed files directly from a PR
-- [ ] `--expand-deps` — fetch and diagram external type definitions
-- [ ] HTML diff summary alongside the diagram
 
 ---
 
