@@ -46,9 +46,13 @@ Flags:
   --out      Output directory for the HTML file (default: current directory)
   --dry-run  Print the D2 diagram source to stdout instead of rendering
   --analyzer Path to the analyzer binary (default: auto-detected)
+  --pr       Azure DevOps Pull Request number
+  --org      Azure DevOps organisation name
+  --project  Azure DevOps project name
+  --token    Personal Access Token (or set AZURE_DEVOPS_TOKEN env var)
 ```
 
-### Examples
+### From local files
 
 ```sh
 # Single directory
@@ -64,14 +68,36 @@ prdiagram --dir src/MyProject --out /tmp/diagrams
 prdiagram --dir src/MyProject --dry-run
 ```
 
+### From an Azure DevOps Pull Request
+
+Diagrams all `.cs` and `.csproj` files changed in the PR, fetched directly from Azure DevOps — no local checkout needed.
+
+```sh
+prdiagram --pr 123 --org myorg --project myproject --token <PAT>
+```
+
+The repository is resolved automatically from the PR — no `--repo` flag needed. The token can also be supplied via the `AZURE_DEVOPS_TOKEN` environment variable:
+
+```sh
+export AZURE_DEVOPS_TOKEN=<PAT>
+prdiagram --pr 123 --org myorg --project myproject
+```
+
+The output file is named `pr-diagram-pr-123.html`.
+
 ---
 
 ## How it works
 
 ```
-.cs files
-   │
-   ▼
+Azure DevOps PR          local .cs files
+       │                        │
+       ▼                        │
+  REST API fetch                │
+  (changed .cs / .csproj)       │
+       │                        │
+       └──────────┬─────────────┘
+                  ▼
 Roslyn analyzer (.NET, single-file exe)
    │  Parses syntax tree, emits JSON:
    │  types, properties, methods, inheritance, interfaces
@@ -142,7 +168,7 @@ pr-diagram/
 
 ## Roadmap
 
-- [ ] Azure DevOps integration — `--org`, `--project`, `--repo`, `--pr`, `--token` flags to fetch changed files directly from a PR
+- [x] Azure DevOps integration — `--org`, `--project`, `--pr`, `--token` flags to fetch changed files directly from a PR (repository resolved automatically)
 
 ---
 
